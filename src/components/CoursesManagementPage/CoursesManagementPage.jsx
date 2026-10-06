@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Search,
   ChevronDown,
@@ -31,6 +31,41 @@ function CoursesManagementPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
   const [detailCourse, setDetailCourse] = useState(null);
+  
+  // Filtrlar: qaysi biri ochiq — "category", "status" yoki null (hech biri)
+  const [openFilter, setOpenFilter] = useState(null);
+  const categoryRef = useRef(null);
+  const statusRef = useRef(null);
+
+  const categoryItems = [
+    { value: "all", label: t("admin.allTracks") },
+    ...categoryOptions.map((c) => ({ value: c, label: c })),
+  ];
+  const statusItems = [
+    { value: "all", label: t("admin.allStatuses") },
+    { value: "faol", label: t("common.active") },
+    { value: "nofaol", label: t("common.inactive") },
+  ];
+  const currentCategory = categoryItems.find((o) => o.value === categoryFilter) || categoryItems[0];
+  const currentStatus = statusItems.find((o) => o.value === statusFilter) || statusItems[0];
+
+  // Ochiq ro'yxat tashqarisiga bosilganda yoki Esc bosilganda yopiladi
+  useEffect(() => {
+    if (!openFilter) return;
+    const ref = openFilter === "category" ? categoryRef : statusRef;
+    function handleClick(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpenFilter(null);
+    }
+    function handleKey(e) {
+      if (e.key === "Escape") setOpenFilter(null);
+    }
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [openFilter]);
 
   useEffect(() => {
     saveCourses(courses);
@@ -149,29 +184,80 @@ function CoursesManagementPage() {
           />
         </div>
 
-        <div className={styles.filterBox}>
-          <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-            <option value="all">{t("admin.allTracks")}</option>
-            {categoryOptions.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-          <ChevronDown size={16} style={{ color: "var(--c-8a94a6)" }} />
+                <div ref={categoryRef} className={`${styles.dropdown} ${openFilter === "category" ? styles.dropdownOpen : ""}`}>
+          <button
+            type="button"
+            className={styles.dropdownTrigger}
+            onClick={() => setOpenFilter((o) => (o === "category" ? null : "category"))}
+            aria-haspopup="listbox"
+            aria-expanded={openFilter === "category"}
+          >
+            <span>{currentCategory.label}</span>
+            <ChevronDown size={16} className={styles.dropdownChevron} />
+          </button>
+
+          {openFilter === "category" && (
+            <div className={`${styles.dropdownMenu} ${styles.dropdownMenuStart}`} role="listbox">
+              {categoryItems.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  role="option"
+                  aria-selected={o.value === categoryFilter}
+                  className={`${styles.dropdownOption} ${o.value === categoryFilter ? styles.dropdownSelected : ""}`}
+                  onClick={() => {
+                    setCategoryFilter(o.value);
+                    setOpenFilter(null);
+                  }}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className={styles.filterBox}>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="all">{t("admin.allStatuses")}</option>
-            <option value="faol">{t("common.active")}</option>
-            <option value="nofaol">{t("common.inactive")}</option>
-          </select>
-          <ChevronDown size={16} style={{ color: "var(--c-8a94a6)" }} />
+        <div ref={statusRef} className={`${styles.dropdown} ${openFilter === "status" ? styles.dropdownOpen : ""}`}>
+          <button
+            type="button"
+            className={styles.dropdownTrigger}
+            onClick={() => setOpenFilter((o) => (o === "status" ? null : "status"))}
+            aria-haspopup="listbox"
+            aria-expanded={openFilter === "status"}
+          >
+            <span>{currentStatus.label}</span>
+            <ChevronDown size={16} className={styles.dropdownChevron} />
+          </button>
+
+          {openFilter === "status" && (
+            <div className={`${styles.dropdownMenu}`} role="listbox">
+              {statusItems.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  role="option"
+                  aria-selected={o.value === statusFilter}
+                  className={`${styles.dropdownOption} ${o.value === statusFilter ? styles.dropdownSelected : ""}`}
+                  onClick={() => {
+                    setStatusFilter(o.value);
+                    setOpenFilter(null);
+                  }}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        <button className={styles.addBtn} onClick={openAddModal}>
+        <button className={styles.addBtn} onClick={openAddModal} aria-label={t("cm.new")}>
           <Plus size={16} />
-          {t("cm.new")}
+          <span className={styles.addText}>{t("cm.new")}</span>
         </button>
+
+
+
+
       </div>
 
       <div className={styles.grid}>

@@ -5,8 +5,6 @@ export const categoryOptions = [
   "Backend",
   "Dizayn",
   "Mobil dasturlash",
-  "Ingliz tili",
-  "Matematika",
 ];
 
 export const coursesSeed = [

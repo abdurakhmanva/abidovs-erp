@@ -5,8 +5,6 @@ export const subjectOptions = [
   "Backend",
   "Dizayn",
   "Mobil dasturlash",
-  "Ingliz tili",
-  "Matematika",
 ];
 
 export const teachersSeed = [
